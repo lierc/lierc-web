@@ -1,5 +1,6 @@
 import { Emoji } from "./emoji.js";
 import { Unformat } from "./format.js";
+import { byte_length, split_bytes } from "./split.js";
 
 export const UIEvents = function(app) {
   const max_userhost_len = 63 + 10 + 1;
@@ -424,37 +425,18 @@ export const UIEvents = function(app) {
         if (!value)
           continue;
 
+        // the room left for text once the server has added our prefix
+        // when it relays the line, all in bytes (liercd refuses a line
+        // over IRC's limit rather than let the server cut it short)
         // https://github.com/irssi/irssi/blob/fcd3ec467ff0e5943f34bb3a906bbe07ba6963ff/src/irc/core/irc-servers.c#L207
         const privmsg = `PRIVMSG ${panel.name} :`;
-        const max = 510 - "!: PRIVMSG :".length - panel.name.length - connection.nick.length - max_userhost_len;
-        if (value.length < max) {
-          send.push(privmsg + value);
+        const max = 510 - "!: PRIVMSG :".length - byte_length(panel.name) - byte_length(connection.nick) - max_userhost_len;
+        if (byte_length(value) > max * 20) {
+          alert("This is too much text!");
+          return;
         }
-        else {
-          const words = value.split(/(\b)/);
-          let len = 0;
-          let buf = [];
-
-          if (words.length > max * 20) {
-            alert("This is too much text!");
-            return;
-          }
-
-          for (let i=0; i < words.length; i++) {
-            const word = words[i];
-            if (len + word.length > max) {
-              send.push(privmsg + buf.join(""));
-              len = word.length;
-              buf = [word];
-            }
-            else {
-              buf.push(word);
-              len += word.length;
-            }
-          }
-          if (buf.length) {
-            send.push(privmsg + buf.join(""));
-          }
+        for (const piece of split_bytes(value, max)) {
+          send.push(privmsg + piece);
         }
       }
     }
