@@ -257,9 +257,51 @@
         }
       }
 
+      /* a reply, as the app draws it: its original on one small, lighter
+         line, and the reply indented under a corner */
+      .preview .reply {
+        display: block;
+        position: relative;
+        padding-left: 36px;
+
+        & .original {
+          display: block;
+          margin-left: -22px;
+          color: #999;
+          font-size: 12px;
+          line-height: 16px;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+
+          & b {
+            font-weight: 700;
+          }
+        }
+
+        & .row {
+          display: flex;
+          justify-content: space-between;
+          gap: 12px;
+        }
+
+        &::before {
+          content: "";
+          position: absolute;
+          left: 20px;
+          top: 14px;
+          width: 10px;
+          height: 12px;
+          border-left: 2px solid #999;
+          border-bottom: 2px solid #999;
+          border-bottom-left-radius: 5px;
+          opacity: 0.5;
+        }
+      }
+
       .preview .reaction {
         display: inline-block;
-        margin: 2px 0 0 14px;
+        margin: 4px 0 0;
         padding: 0 7px;
         border: 1px solid rgba(38, 139, 210, 0.5);
         background: rgba(38, 139, 210, 0.12);
@@ -351,9 +393,12 @@
             <li><span><span class="nick" style="color:#6c71c4">&lt;mira&gt;</span> back from lunch, what did i miss?</span><time>10:02</time></li>
             <li><span><span class="nick" style="color:#cb4b16">&lt;kenji&gt;</span> check the line below, that's where you stopped</span><time>10:03</time></li>
             <li class="last-read" aria-hidden="true"></li>
-            <li class="mention"><span><span class="nick" style="color:#d33682">&lt;tobias&gt;</span> mira: your build passed 🎉</span><time>10:14</time></li>
+            <li class="mention"><span><span class="nick" style="color:#d33682">&lt;tobias&gt;</span> mira: your build passed 🎉<br><span class="reaction">🎉 <b>2</b></span></span><time>10:14</time></li>
+            <li class="reply">
+              <span class="original"><b>tobias</b> mira: your build passed 🎉</span>
+              <span class="row"><span><span class="nick" style="color:#6c71c4">&lt;mira&gt;</span> tobias: finally, thanks for fixing the flaky test</span><time>10:15</time></span>
+            </li>
           </ol>
-          <span class="reaction">🎉 <b>2</b></span>
           <div class="typing">kenji is typing…</div>
         </figure>
       </section>
@@ -379,8 +424,8 @@
           <dd>Look back through a channel by date, sender or text.</dd>
         </div>
         <div>
-          <dt>IRCv3 reactions and typing</dt>
-          <dd>React to messages and see who's typing, on networks that support them.</dd>
+          <dt>IRCv3 replies, reactions and typing</dt>
+          <dd>Reply to a message with the original shown above it, react to messages, and see who's typing, on networks that support them.</dd>
         </div>
         <div>
           <dt>SASL login</dt>
