@@ -1305,6 +1305,70 @@ li.flash {
   from { background: var(--highlight-bg); }
 }
 
+/* Replying to: the original above the input, in the same small, light
+   line, and the input box indented under the same corner */
+#reply-bar {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  flex-basis: 100%;
+  min-width: 0;
+  margin: 4px 5px 0;
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--date-text);
+  white-space: nowrap;
+  overflow: hidden;
+
+  &[hidden] {
+    display: none;
+  }
+
+  & .reply-original-nick,
+  & .reply-bar-label {
+    flex: none;
+  }
+
+  & .reply-original-text {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  & .reply-cancel {
+    flex: none;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+    padding: 0 4px;
+
+    &:hover {
+      color: var(--meta-text);
+    }
+  }
+}
+
+#foot.replying #input-box {
+  position: relative;
+  margin-left: 27px;
+
+  &::before {
+    content: "";
+    position: absolute;
+    left: -21px;
+    top: -6px;
+    width: 12px;
+    height: 20px;
+    border-left: 2px solid var(--date-text);
+    border-bottom: 2px solid var(--date-text);
+    border-bottom-left-radius: 5px;
+    opacity: 0.5;
+  }
+}
+
 .reply-original-nick {
   font-weight: bold;
 }
@@ -1562,9 +1626,32 @@ p.embed-source {
     display: block;
   }
 
-  /* the server doesn't take reactions (Panel.set_can_react) */
-  ol.no-react li.message & {
+  /* the server takes neither reactions nor replies (Panel.set_can_react,
+     set_can_reply): nothing to show */
+  ol.no-react.no-reply li.message & {
     display: none;
+  }
+}
+
+ol.no-react li.message .message-react,
+ol.no-reply li.message .message-reply {
+  display: none;
+}
+
+/* the reply button, beside react (Panel.set_can_reply hides it) */
+.message-reply {
+  display: inline-block;
+
+  &:hover {
+    color: var(--button-icon-hover);
+  }
+
+  &::before {
+    content: '\f3e5'; /* reply */
+    cursor: pointer;
+    font-family: var(--fa-family-classic);
+    font-weight: 900;
+    padding: 0 3px;
   }
 }
 

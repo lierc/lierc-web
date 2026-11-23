@@ -378,6 +378,11 @@ export const Render = function(message, opts) {
     const controls = document.createElement('DIV');
     controls.classList.add('message-controls', 'popup-toggle');
 
+    const reply = document.createElement('DIV');
+    reply.classList.add('message-reply');
+    reply.setAttribute('title', 'Reply');
+    controls.appendChild(reply);
+
     const react = document.createElement('DIV');
     react.classList.add('message-react', 'popup-toggle');
     controls.appendChild(react);

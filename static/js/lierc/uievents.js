@@ -1,6 +1,7 @@
 import { Emoji } from "./emoji.js";
 import { Unformat } from "./format.js";
 import { byte_length, split_bytes } from "./split.js";
+import { reply_lines } from "./reply.js";
 
 export const UIEvents = function(app) {
   const max_userhost_len = 63 + 10 + 1;
@@ -29,10 +30,13 @@ export const UIEvents = function(app) {
       return;
     }
     else if (e.which == 27) {
-      document.querySelectorAll('.popup-toggle.open,.flex-wrap.open')
-        .forEach((el) => {
-          el.classList.remove('open');
-        });
+      const open = document.querySelectorAll('.popup-toggle.open,.flex-wrap.open');
+      open.forEach((el) => {
+        el.classList.remove('open');
+      });
+      // Esc with nothing open to close cancels a reply
+      if (!open.length)
+        app.cancel_reply();
     }
 
     /* the :name emoji list takes its keys first, before enter sends */
@@ -441,6 +445,12 @@ export const UIEvents = function(app) {
       }
     }
 
+    // a reply: +reply on the first message line, never on a command's
+    if (app.replying?.panel_id == panel.id && text.substring(0,1) != "/") {
+      send.splice(0, send.length, ...reply_lines(send, app.replying.msgid));
+      app.cancel_reply();
+    }
+
     // one at a time, in order, stopping at the first failure
     async function sendlines(lines) {
       for (const line of lines) {
@@ -811,6 +821,20 @@ export const UIEvents = function(app) {
     m.observe(p, c);
 
     setTimeout(() =>{ m.disconnect(); }, 10000);
+  });
+
+  // the reply button in a message's hover box
+  app.elem.panel.addEventListener('click', (e) => {
+    const button = e.target.closest('.message-reply');
+    if (!button)
+      return;
+    button.closest('.message-controls')?.classList.remove('open');
+    app.start_reply(app.focused, button.closest('li.message'));
+  });
+
+  document.querySelector('#reply-bar .reply-cancel').addEventListener('click', () => {
+    app.cancel_reply();
+    app.focus_input();
   });
 
   // a reply's original line: jump to the original, where it's loaded (not

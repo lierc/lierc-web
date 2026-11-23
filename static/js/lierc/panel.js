@@ -1269,6 +1269,12 @@ export class Panel {
   // Whether the server takes reactions; without them the list's react
   // buttons are hidden (lierc.css), and existing reactions can't be
   // toggled.
+  // Whether the server takes replies (+reply); without them the list's
+  // reply buttons are hidden (lierc.css).
+  set_can_reply(bool) {
+    this.elem.list.classList.toggle('no-reply', !bool);
+  }
+
   set_can_react(bool) {
     this.elem.list.classList.toggle('no-react', !bool);
   }
