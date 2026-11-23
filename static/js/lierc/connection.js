@@ -459,6 +459,13 @@ export class Connection extends EventTarget {
       && !this.client_tag_denied("reply");
   }
 
+  // A reply is a PRIVMSG with +reply, so it needs message-tags and the tag
+  // not refused by the server's CLIENTTAGDENY.
+  can_reply() {
+    return !!this.caps_enabled["message-tags"]
+      && !this.client_tag_denied("reply");
+  }
+
   // CLIENTTAGDENY is a comma-separated list of client tags (no "+") the
   // server drops: "*" for all of them, with "-tag" exempting one.
   client_tag_denied(tag) {

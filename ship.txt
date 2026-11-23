@@ -62,6 +62,7 @@ static/js/lierc/notifier.js
 static/js/lierc/panel.js
 static/js/lierc/relaymsg.js
 static/js/lierc/render.js
+static/js/lierc/reply.js
 static/js/lierc/split.js
 static/js/lierc/stream.js
 static/js/lierc/template.js

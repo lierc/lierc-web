@@ -2,6 +2,7 @@ import { Editor } from "./editor.js";
 import { Embed } from "./embed.js";
 import { Emoji } from "./emoji.js";
 import { Format } from "./format.js";
+import { referenced_msgid } from "./reply.js";
 import { safe, Template } from "./template.js";
 
 const months = [ "Jan", "Feb", "Mar", "Apr", "May", "June", "July", "Aug", "Sept", "Oct", "Nov", "Dec" ];
@@ -940,9 +941,7 @@ export class Panel {
     if (!message.Tags)
       return null;
 
-    // +reply, the reply spec's tag; +draft/reply from older clients (and
-    // older reactions of ours, in the log)
-    const id = message.Tags["+reply"] || message.Tags["+draft/reply"];
+    const id = referenced_msgid(message.Tags);
     const react = message.Tags["+draft/react"];
     const unreact = message.Tags["+draft/unreact"];
     const emoji = unreact || react;
