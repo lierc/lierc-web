@@ -90,20 +90,39 @@ export class Connection {
       this.#fire("status:raw", this.id, message);
       break;
 
+    // The server's own CAP lines (liercd publishes them as they come) and
+    // the stream's replayed "CAP * ACK", from liercd's acked caps. Only ACK
+    // and DEL change what's enabled: LS and NEW are offers, and a NAK
+    // refuses a request. The list is the last param, "-cap" in an ACK
+    // turns a cap off, and an "=value" belongs to the cap.
     case "CAP": {
-      const caps = message.Params[2].split(" ");
-      for (let i=0; i < caps.length; i++) {
-        this.caps_enabled[caps[i]] = true;
+      const sub = String(message.Params[1]).toUpperCase();
+      if (sub != "ACK" && sub != "DEL")
+        break;
+      const caps = String(message.Params[message.Params.length - 1]).split(" ");
+      for (const cap of caps) {
+        if (!cap)
+          continue;
+        const off = sub == "DEL" || cap.startsWith("-");
+        const name = cap.replace(/^-/, "").split("=")[0];
+        if (off)
+          delete this.caps_enabled[name];
+        else
+          this.caps_enabled[name] = true;
       }
+      this.#fire("caps", this.id);
       break;
     }
 
+    // The nick, a token per param, then the trailing "are supported by
+    // this server"; the stream's replayed 005s are shaped the same.
     case "005": {
-      const parts = message.Params[1].split(" ");
+      const parts = message.Params.slice(1, -1).filter((p) => p);
 
       for (let i=0; i < parts.length; i++) {
-        if (parts[i].indexOf("=") != -1) {
-          const kv = parts[i].split("=", 2);
+        const eq = parts[i].indexOf("=");
+        if (eq != -1) {
+          const kv = [parts[i].slice(0, eq), parts[i].slice(eq + 1)];
           this.isupport[kv[0]] = kv[1];
           if (kv[0] == "PREFIX") {
             const match = kv[1].match(/\(([^\)]+)\)(.+)/);
@@ -124,6 +143,7 @@ export class Connection {
           this.isupport[parts[i]] = true;
         }
       }
+      this.#fire("caps", this.id);
       break;
     }
 
@@ -417,6 +437,36 @@ export class Connection {
       }
     }
     return false;
+  }
+
+  // Forgets the caps and ISUPPORT of the server connection that's gone
+  // (a disconnect, or a stream snapshot, whose replayed CAP ACK and 005
+  // follow it), so the next one's are all that count.
+  reset_server_state() {
+    this.caps_enabled = {};
+    this.isupport = {};
+    this.#fire("caps", this.id);
+  }
+
+  // A reaction is a TAGMSG with +draft/react (or +draft/unreact) and
+  // +draft/reply, so it needs message-tags and neither tag refused by the
+  // server's CLIENTTAGDENY.
+  can_react() {
+    return !!this.caps_enabled["message-tags"]
+      && !this.client_tag_denied("draft/react")
+      && !this.client_tag_denied("draft/reply");
+  }
+
+  // CLIENTTAGDENY is a comma-separated list of client tags (no "+") the
+  // server drops: "*" for all of them, with "-tag" exempting one.
+  client_tag_denied(tag) {
+    const deny = this.isupport["CLIENTTAGDENY"];
+    if (typeof deny != "string" || deny == "")
+      return false;
+    const list = deny.split(",");
+    if (list.includes(`-${tag}`))
+      return false;
+    return list.includes("*") || list.includes(tag);
   }
 
   is_channel(name) {

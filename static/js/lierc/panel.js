@@ -1181,6 +1181,13 @@ export class Panel {
     this.update_nav();
   }
 
+  // Whether the server takes reactions; without them the list's react
+  // buttons are hidden (lierc.css), and existing reactions can't be
+  // toggled.
+  set_can_react(bool) {
+    this.elem.list.classList.toggle('no-react', !bool);
+  }
+
   set_show_nicklist(bool) {
     this.scroll(() => {
       if (bool)

@@ -155,6 +155,9 @@ export class App {
   set_connected(conn_id, status, message) {
     const connection = this.connections[conn_id];
     connection.connected = status;
+    // the next server connection's CAP ACK and 005 refill them
+    if (!status)
+      connection.reset_server_state();
 
     for (const id in this.panels) {
       const panel = this.panels[id];
@@ -298,7 +301,23 @@ export class App {
       if (touched.has(c.Id))
         continue;
       this.setup_connection(c.Id, c.Name, c.Nick, c.Host, c.Port);
+      // the replay after the snapshot sends its caps and 005 again, so
+      // ones the server dropped while the stream was down are forgotten
+      this.connections[c.Id].reset_server_state();
       this.set_connected(c.Id, !!c.Connected);
+    }
+  }
+
+  // Shows or hides the react button in the connection's panels, as its
+  // server's caps and ISUPPORT allow.
+  update_can_react(conn_id) {
+    const connection = this.connections[conn_id];
+    if (!connection)
+      return;
+    const can = connection.can_react();
+    for (const id in this.panels) {
+      if (this.panels[id].connection == conn_id)
+        this.panels[id].set_can_react(can);
     }
   }
 
@@ -342,6 +361,8 @@ export class App {
       delete this.pending_connected[id];
       this.set_connected(id, connected);
     }
+
+    connection.on("caps", (conn) => this.update_can_react(conn));
 
     connection.on("channel:new", (conn, channel, message) => {
       this.channel_joined(conn, channel, message);
@@ -755,6 +776,7 @@ export class App {
     if (this.last_seen[panel.id])
       panel.last_seen = this.last_seen[panel.id];
     panel.update_nav();
+    panel.set_can_react(conn.can_react());
 
     if (panel.type == "channel") {
       const channel = conn.channel(panel.name);
@@ -1144,6 +1166,8 @@ export class App {
 
   async send_reaction(panel, id, emoji, remove) {
     if (!panel || !panel.connection || !id || !emoji)
+      return;
+    if (!this.connections[panel.connection]?.can_react())
       return;
 
     const tag = `@+draft/reply=${id};${remove ? "+draft/unreact=" : "+draft/react="}${emoji}`;

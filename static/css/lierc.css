@@ -1504,6 +1504,11 @@ p.embed-source {
   &.open {
     display: block;
   }
+
+  /* the server doesn't take reactions (Panel.set_can_react) */
+  ol.no-react li.message & {
+    display: none;
+  }
 }
 
 .message-react {
@@ -1550,6 +1555,16 @@ p.embed-source {
     &:hover {
       background: var(--reaction-bg-hover);
       border-color: var(--reaction-border-hover);
+    }
+
+    /* can't be toggled when the server doesn't take reactions */
+    ol.no-react & {
+      cursor: default;
+
+      &:hover {
+        background: var(--reaction-bg);
+        border-color: var(--reaction-border);
+      }
     }
   }
 
