@@ -940,7 +940,9 @@ export class Panel {
     if (!message.Tags)
       return null;
 
-    const id = message.Tags["+draft/reply"];
+    // +reply, the reply spec's tag; +draft/reply from older clients (and
+    // older reactions of ours, in the log)
+    const id = message.Tags["+reply"] || message.Tags["+draft/reply"];
     const react = message.Tags["+draft/react"];
     const unreact = message.Tags["+draft/unreact"];
     const emoji = unreact || react;

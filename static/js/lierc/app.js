@@ -1175,7 +1175,9 @@ export class App {
     if (!this.connections[panel.connection]?.can_react())
       return;
 
-    const tag = `@+draft/reply=${id};${remove ? "+draft/unreact=" : "+draft/react="}${emoji}`;
+    // +reply only: the reply spec's tag, which halloy and goguma read
+    // first (+draft/reply is only read, from older clients)
+    const tag = `@+reply=${id};${remove ? "+draft/unreact=" : "+draft/react="}${emoji}`;
 
     try {
       await this.api.post(`/connection/${panel.connection}`, {

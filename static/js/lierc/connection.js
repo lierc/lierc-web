@@ -451,12 +451,12 @@ export class Connection extends EventTarget {
   }
 
   // A reaction is a TAGMSG with +draft/react (or +draft/unreact) and
-  // +draft/reply, so it needs message-tags and neither tag refused by the
+  // +reply, so it needs message-tags and neither tag refused by the
   // server's CLIENTTAGDENY.
   can_react() {
     return !!this.caps_enabled["message-tags"]
       && !this.client_tag_denied("draft/react")
-      && !this.client_tag_denied("draft/reply");
+      && !this.client_tag_denied("reply");
   }
 
   // CLIENTTAGDENY is a comma-separated list of client tags (no "+") the
