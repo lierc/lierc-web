@@ -153,9 +153,9 @@ export class Connection {
 
       if (old == this.nick) {
         this.nick = nick;
+        this.#fire("status:raw", this.id, message);
         this.channels.forEach((channel) => {
           channel.rename_nick(old, nick);
-          this.#fire("status:raw", this.id, message);
           this.#fire("channel:msg", this.id, channel.name, message);
           this.#fire("channel:nicks", this.id, channel.name, this.nicks(channel))
         });
@@ -174,16 +174,6 @@ export class Connection {
     case "PART": {
       const nick = message.Prefix.Name;
       const name = message.Params[0];
-      const msg = message.Params[1];
-
-      let del = true;
-      for (let i=0; i < this.channels; i++) {
-        if (this.channels[i].contains_nick(nick)) {
-          del = false;
-          break;
-        }
-      }
-
       const channel = this.channel(name);
 
       if (channel) {
@@ -196,7 +186,7 @@ export class Connection {
           this.#fire("channel:msg", this.id, name, message);
           this.#fire("channel:nicks", this.id, name, this.nicks(channel))
         }
-      };
+      }
       break;
     }
 
@@ -239,8 +229,10 @@ export class Connection {
       const nick = message.Prefix.Name;
 
       if (nick == this.nick) {
-        const channel = new Channel(name);
-        this.channels.push(channel);
+        // a channel we have already (the stream's replay, after it
+        // reopened) is kept: its 353s replace its nicks
+        if (!this.channel(name))
+          this.channels.push(new Channel(name));
         this.#fire("channel:new", this.id, name, message);
       }
       else {
@@ -439,6 +431,18 @@ export class Connection {
       }
     }
     return false;
+  }
+
+  // Closes the channels not in names, the channels the stream's snapshot
+  // says we're in: ones left (or kicked from) while the stream was down.
+  keep_channels(names) {
+    const keep = new Set(names.map((n) => n.toLowerCase()));
+    for (const channel of [...this.channels]) {
+      if (!keep.has(channel.name.toLowerCase())) {
+        this.remove_channel(channel.name);
+        this.#fire("channel:close", this.id, channel.name);
+      }
+    }
   }
 
   // Forgets the caps and ISUPPORT of the server connection that's gone

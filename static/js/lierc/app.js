@@ -287,7 +287,8 @@ export class App {
 
   // Brings the connections in line with list, the snapshot a stream sends
   // when it opens: adds the missing ones, removes ones that are gone (a
-  // delete missed while the stream was down) and sets each one's state.
+  // delete missed while the stream was down), sets each one's state and
+  // closes channels it has left.
   // Connections a live event has touched since the stream opened are left
   // as those events made them: they're newer than the snapshot.
   apply_connections(list) {
@@ -305,6 +306,10 @@ export class App {
       // ones the server dropped while the stream was down are forgotten
       this.connections[c.Id].reset_server_state();
       this.set_connected(c.Id, !!c.Connected);
+      // a registered connection's channels (an older API, or one not
+      // registered, sends none): ones not listed were left while away
+      if (Array.isArray(c.Channels))
+        this.connections[c.Id].keep_channels(c.Channels);
     }
   }
 
