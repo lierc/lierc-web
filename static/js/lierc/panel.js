@@ -940,6 +940,10 @@ export class Panel {
   // in the list, else from the server, else left pending until backlog
   // with the original loads. Fills inside scroll(), so the view holds.
   resolve_replies(els) {
+    // an unfocused panel drops what's appended (append), and its backlog
+    // is loaded, and its replies resolved, when it's focused
+    if (!this.focused)
+      return;
     for (const li of els) {
       if (!li?.matches?.('li[data-reply-to]'))
         continue;

@@ -34,8 +34,10 @@ export const UIEvents = function(app) {
       open.forEach((el) => {
         el.classList.remove('open');
       });
-      // Esc with nothing open to close cancels a reply
-      if (!open.length)
+      // Esc with nothing open to close cancels a reply: not when it closes
+      // a popup, the :emoji suggestions or the switcher (handled below)
+      if (!open.length && !app.focused?.editor.emoji.open
+          && !app.elem.switcher.classList.contains('open'))
         app.cancel_reply();
     }
 

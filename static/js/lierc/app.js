@@ -2070,13 +2070,20 @@ export class App {
 
   // A reply's original, from the server: its IRC message, or null (none,
   // an error, or an older API). Cached per connection and msgid, the
-  // answer included, and at most 4 asked at once.
+  // answer included ("no such message", not a failure), and at most 4
+  // asked at once.
   lookup_original(conn_id, msgid) {
     const key = `${conn_id} ${msgid}`;
     if (!this.originals.has(key)) {
       const path = `/connection/${encodeURIComponent(conn_id)}/message/${encodeURIComponent(msgid)}`;
       this.originals.set(key, this.limit_lookups(() => this.api.get(path))
-        .then((e) => e?.Message ?? null, () => null));
+        .then((e) => e?.Message ?? null, (error) => {
+          // only the server's "no such message" is kept: a failure (the
+          // network, an error, an API without the route) is asked again
+          if (!String(error).includes("no such message"))
+            this.originals.delete(key);
+          return null;
+        }));
     }
     return this.originals.get(key);
   }
