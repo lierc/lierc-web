@@ -254,11 +254,13 @@ export class Connection {
       break;
     }
 
+    // The nick, the channel, then its modes ("+nt") and any mode args;
+    // the stream's replayed 324s are shaped the same.
     case "324": {
-      const name = message.Params[0];
+      const name = message.Params[1];
       const channel = this.channel(name)
-      if (channel) {
-        channel.mode = message.Params[1].substring(1);
+      if (channel && message.Params[2] != null) {
+        channel.mode = String(message.Params[2]).replace(/^\+/, "");
         this.#fire("channel:mode", this.id, name, channel.mode);
       }
       break;
