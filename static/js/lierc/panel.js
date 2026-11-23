@@ -2,7 +2,8 @@ import { Editor } from "./editor.js";
 import { Embed } from "./embed.js";
 import { Emoji } from "./emoji.js";
 import { Format } from "./format.js";
-import { referenced_msgid } from "./reply.js";
+import { referenced_msgid, summary } from "./reply.js";
+import { fill_original } from "./render.js";
 import { safe, Template } from "./template.js";
 
 const months = [ "Jan", "Feb", "Mar", "Apr", "May", "June", "July", "Aug", "Sept", "Oct", "Nov", "Dec" ];
@@ -43,6 +44,11 @@ export class Panel {
     this.focus_count = 0;
     this.backlog_empty = false;
     this.reactions = [];
+    // replies whose original isn't loaded or found yet, checked again as
+    // backlog loads (reply_backlog_check)
+    this.pending_replies = [];
+    // (conn_id, msgid) => Promise of the original's IRC message, or null
+    this.lookup_original = opts.lookup_original || null;
     this.monospace_nicks = [];
     this.ignore_nicks = [];
     this.ignore_events = false;
@@ -267,6 +273,7 @@ export class Panel {
     this.focused = false;
     this.elem.nav.classList.remove("active");
     this.clear_lists();
+    this.pending_replies = [];
     this.backlog_empty = false;
     this.oldest_message = null;
     this.oldest_message_id = null;
@@ -927,6 +934,83 @@ export class Panel {
         audio.load();
       }
     }
+  }
+
+  // Finds the originals of the replies among els (just added to the list):
+  // in the list, else from the server, else left pending until backlog
+  // with the original loads. Fills inside scroll(), so the view holds.
+  resolve_replies(els) {
+    for (const li of els) {
+      if (!li?.matches?.('li[data-reply-to]'))
+        continue;
+      if (!this.fill_from_list(li))
+        this.look_up(li);
+    }
+  }
+
+  // The original from the list, if it's loaded.
+  fill_from_list(li) {
+    const original = this.original_row(li.getAttribute('data-reply-to'));
+    if (!original?.irc_message || original === li)
+      return false;
+    const div = li.querySelector(':scope > .reply-original');
+    this.scroll(() => fill_original(div, summary(original.irc_message)));
+    return true;
+  }
+
+  original_row(msgid) {
+    return this.elem.list.querySelector(`li[data-message-server-id="${CSS.escape(msgid)}"]`);
+  }
+
+  // The original from the server: the line keeps its place meanwhile. A
+  // reply whose panel was unfocused (its list cleared) or whose row is
+  // gone by the answer is left alone; one with no original on the server
+  // waits for backlog.
+  look_up(li) {
+    const conn = li.getAttribute('data-connection-id') || this.connection;
+    if (!this.lookup_original || !conn) {
+      this.pending_replies.push(li);
+      return;
+    }
+    const div = li.querySelector(':scope > .reply-original');
+    div.hidden = false;
+    div.classList.add('pending');
+    const count = this.focus_count;
+    this.lookup_original(conn, li.getAttribute('data-reply-to')).then((message) => {
+      if (this.focus_count != count || !this.elem.list.contains(li))
+        return;
+      if (message) {
+        this.scroll(() => fill_original(div, summary(message)));
+        return;
+      }
+      div.classList.remove('pending');
+      div.hidden = true;
+      this.pending_replies.push(li);
+    });
+  }
+
+  // Pending replies again, against the list only, after backlog loads.
+  reply_backlog_check() {
+    const pending = this.pending_replies;
+    this.pending_replies = [];
+    for (const li of pending) {
+      if (this.elem.list.contains(li) && !this.fill_from_list(li))
+        this.pending_replies.push(li);
+    }
+  }
+
+  // Scrolls to the original of a reply and flashes it; false if it isn't
+  // loaded.
+  jump_to(msgid) {
+    const original = this.original_row(msgid);
+    if (!original)
+      return false;
+    original.scrollIntoView({ block: "center" });
+    original.classList.remove('flash');
+    void original.offsetWidth; // restart the animation
+    original.classList.add('flash');
+    setTimeout(() => original.classList.remove('flash'), 1500);
+    return true;
   }
 
   react_backlog_check() {

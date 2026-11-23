@@ -813,6 +813,16 @@ export const UIEvents = function(app) {
     setTimeout(() =>{ m.disconnect(); }, 10000);
   });
 
+  // a reply's original line: jump to the original, where it's loaded (not
+  // in All Highlights, whose rows come from many panels)
+  app.elem.panel.addEventListener('click', (e) => {
+    const line = e.target.closest('.reply-original');
+    if (!line || line.closest('li.search'))
+      return;
+    const li = line.closest('li[data-reply-to]');
+    app.focused?.jump_to(li.getAttribute('data-reply-to'));
+  });
+
   app.elem.panel.addEventListener('click', (e) => {
     if (!e.target.matches('.message-react, .message-react *'))
       return;

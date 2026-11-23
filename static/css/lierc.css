@@ -1296,6 +1296,15 @@ li.message.monospace.consecutive .message-nick {
   }
 }
 
+/* the original, jumped to from a reply (Panel.jump_to) */
+li.flash {
+  animation: reply-flash 1.5s ease-out;
+}
+
+@keyframes reply-flash {
+  from { background: var(--highlight-bg); }
+}
+
 .reply-original-nick {
   font-weight: bold;
 }

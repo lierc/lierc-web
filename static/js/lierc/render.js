@@ -185,6 +185,8 @@ export const Render = function(message, opts) {
     }
 
     const li = make("message", message);
+    // for replies to it: its summary is built from this (Panel)
+    li.irc_message = message;
 
     // a reply: a line for its original above the row, filled in once the
     // original is found (Panel.resolve_replies), and the row indented
