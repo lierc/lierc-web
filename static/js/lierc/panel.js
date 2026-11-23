@@ -1338,13 +1338,18 @@ export class Panel {
       let msg = this.elem.list.querySelector(`li[data-message-id="${this.last_seen}"]`);
       if (!msg) return;
 
+      // the next shown row: skipping hidden ones (events) and anything that
+      // isn't an element, like the whitespace a date separator's template
+      // leaves around it, which getComputedStyle throws on
       let next_visible;
-      while (msg.nextSibling) {
-        if (msg.nodeType == 1 && getComputedStyle(msg.nextSibling).display != "none") {
-          next_visible = msg.nextSibling;
+      for (let n = msg.nextSibling; n; n = n.nextSibling) {
+        if (n.nodeType != 1)
+          continue;
+        if (getComputedStyle(n).display != "none") {
+          next_visible = n;
           break;
         }
-        msg = msg.nextSibling;
+        msg = n;
       }
 
       if (next_visible) {
