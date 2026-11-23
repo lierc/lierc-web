@@ -1270,6 +1270,54 @@ li.message.monospace.consecutive .message-nick {
   line-height: 1.4em;
 }
 
+/* A reply (render.js): its original on one small, lighter line, flush
+   left above the row, cut with "…"; the row (nick and text) indented
+   under a thin line that drops from the original and turns into it. */
+.reply-original {
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--date-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+
+  &:hover {
+    color: var(--meta-text);
+  }
+
+  /* being looked up: keeps its line, so filling it moves nothing */
+  &.pending {
+    visibility: hidden;
+  }
+
+  li.search & {
+    cursor: auto;
+  }
+}
+
+.reply-original-nick {
+  font-weight: bold;
+}
+
+li.reply > .message-flex {
+  position: relative;
+  padding-left: 22px;
+
+  &::before {
+    content: "";
+    position: absolute;
+    left: 6px;
+    top: -6px;
+    width: 10px;
+    height: 14px;
+    border-left: 2px solid var(--date-text);
+    border-bottom: 2px solid var(--date-text);
+    border-bottom-left-radius: 5px;
+    opacity: 0.5;
+  }
+}
+
 li.monospace .message-text {
   font-family: var(--font-mono);
 }

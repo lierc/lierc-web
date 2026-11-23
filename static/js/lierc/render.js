@@ -1,5 +1,20 @@
 import { Format } from "./format.js";
 import { RelayMsg } from "./relaymsg.js";
+import { reply_to } from "./reply.js";
+
+// Fills a reply's line for its original (Render's .reply-original) with
+// the original's nick and plain text, and shows it.
+export function fill_original(div, { nick, text }) {
+  const n = document.createElement('SPAN');
+  n.classList.add('reply-original-nick');
+  n.textContent = nick;
+  const t = document.createElement('SPAN');
+  t.classList.add('reply-original-text');
+  t.textContent = text;
+  div.replaceChildren(n, " ", t);
+  div.classList.remove('pending');
+  div.hidden = false;
+}
 
 export const Render = function(message, opts) {
   if (!opts) opts = {};
@@ -171,9 +186,22 @@ export const Render = function(message, opts) {
 
     const li = make("message", message);
 
+    // a reply: a line for its original above the row, filled in once the
+    // original is found (Panel.resolve_replies), and the row indented
+    let original = null;
+    const replied = reply_to(message);
+    if (replied) {
+      li.classList.add('reply');
+      li.setAttribute('data-reply-to', replied);
+      original = document.createElement('DIV');
+      original.classList.add('reply-original');
+      original.hidden = true;
+    }
+
     return append(
       li,
       [
+        original,
         flex(from, wrap, timestamp(message)),
         opts['controls'] !== false ? controls(message) : null
       ]
