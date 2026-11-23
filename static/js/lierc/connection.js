@@ -1,9 +1,11 @@
 import { Channel } from "./channel.js";
 
-export class Connection {
-  #listeners = {};
-
+// Events are the browser's own (EventTarget), so a listener that throws
+// is reported and the rest still run, and on_message carries on; on() and
+// #fire() keep the positional arguments, passed as the event's detail.
+export class Connection extends EventTarget {
   constructor(id, host, nick, server_host = null, server_port = null) {
+    super();
     this.id = id;
     this.host = host; // the network's name: its alias, else its host
     this.nick = nick;
@@ -21,17 +23,11 @@ export class Connection {
   }
 
   on(name, func) {
-    if (!this.#listeners[name])
-      this.#listeners[name] = [];
-    this.#listeners[name].push(func);
+    this.addEventListener(name, (e) => func(...e.detail));
   }
 
   #fire(name, ...data) {
-    if (this.#listeners[name]) {
-      this.#listeners[name].forEach((listener) => {
-        listener(...data);
-      });
-    }
+    this.dispatchEvent(new CustomEvent(name, { detail: data }));
   }
 
   remove_channel(name) {

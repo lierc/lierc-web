@@ -22,8 +22,12 @@ const connection_events = [
   "connection:delete", "connection:connect", "connection:disconnect",
 ];
 
-export class Stream {
-  #listeners = {};
+// Events are the browser's own (EventTarget): a listener that throws is
+// reported and the rest still run. on() and fire() keep the positional
+// arguments, passed as the event's detail; destroy() removes every
+// listener at once through #listening.
+export class Stream extends EventTarget {
+  #listening = new AbortController();
   #check_timer;
   #seen = new Set();
   #events = 0;
@@ -36,6 +40,7 @@ export class Stream {
   #parked = false;
 
   constructor(baseurl) {
+    super();
     this.baseurl = baseurl;
     this.retries = 0;
     this.eventsource = null;
@@ -61,17 +66,13 @@ export class Stream {
   }
 
   on(name, func) {
-    if (!this.#listeners[name])
-      this.#listeners[name] = [];
-    this.#listeners[name].push(func);
+    this.addEventListener(name, (e) => func(...e.detail), { signal: this.#listening.signal });
   }
 
+  // Dispatched in a task of its own, as the listeners always ran: after
+  // the EventSource handler (or fill_missed's loop) that fired it.
   fire(name, ...data) {
-    if (this.#listeners[name]) {
-      this.#listeners[name].forEach((listener) => {
-        setTimeout(listener, 0, ...data);
-      });
-    }
+    setTimeout(() => this.dispatchEvent(new CustomEvent(name, { detail: data })), 0);
   }
 
   #connect() {
@@ -339,7 +340,7 @@ export class Stream {
 
   destroy() {
     clearInterval(this.#check_timer);
-    this.#listeners = {};
+    this.#listening.abort();
 
     if (this.eventsource) {
       this.eventsource.removeEventListener("irc", this.onmessage);
