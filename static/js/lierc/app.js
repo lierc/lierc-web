@@ -55,6 +55,8 @@ export class App {
     this.prefs = {};
     this.touchstart = "ontouchstart" in document.documentElement;
     this.mobile = App.detect_mobile();
+    // lierc.css's narrow layout: by window width, not by device
+    this.narrow = window.matchMedia('(max-width: 800px)');
     this.sortable = !this.mobile && !this.touchstart;
     this.theme = 'default';
     this.typing = [];
@@ -1304,8 +1306,17 @@ export class App {
 
     //app.scroll_to_nav(panel.elem.nav);
 
-    if (panel.first_focus && panel.type == "channel")
-      this.show_nicklist_pref(panel);
+    // The channel sidebar: in the narrow layout (any window under 800px,
+    // phone or not) it replaces the messages, so a channel always opens on
+    // its messages there and ⋮ still opens it; in a wider window, the
+    // channel's saved setting. Applied on every focus, so a window that
+    // changes width between switches gets the right one.
+    if (panel.type == "channel") {
+      if (this.narrow.matches)
+        panel.show_nicklist = false;
+      else
+        this.show_nicklist_pref(panel);
+    }
 
     panel.focus();
     this.focused = panel;
