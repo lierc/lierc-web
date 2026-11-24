@@ -1283,10 +1283,16 @@ li.message.monospace.consecutive .message-nick {
   line-height: 16px;
   color: var(--date-text);
   white-space: nowrap;
-  cursor: pointer;
 
   &[hidden] {
     display: none;
+  }
+
+  /* only the nick and text are clickable (uievents.js), so the text
+     doesn't stretch across the line; it shrinks, cut with "…" */
+  & .reply-original-nick,
+  & .reply-original-text {
+    cursor: pointer;
   }
 
   & .reply-original-nick {
@@ -1294,7 +1300,7 @@ li.message.monospace.consecutive .message-nick {
   }
 
   & .reply-original-text {
-    flex: 1 1 auto;
+    flex: 0 1 auto;
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -1315,7 +1321,7 @@ li.message.monospace.consecutive .message-nick {
     opacity: 0.6;
   }
 
-  &:hover {
+  &:has(.reply-original-nick:hover, .reply-original-text:hover) {
     color: var(--meta-text);
   }
 
@@ -1324,7 +1330,7 @@ li.message.monospace.consecutive .message-nick {
     visibility: hidden;
   }
 
-  li.search & {
+  li.search & :is(.reply-original-nick, .reply-original-text) {
     cursor: auto;
   }
 }

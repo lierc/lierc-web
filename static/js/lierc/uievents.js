@@ -860,10 +860,12 @@ export const UIEvents = function(app) {
     app.focus_input();
   });
 
-  // a reply's original line: jump to the original, where it's loaded (not
-  // in All Highlights, whose rows come from many panels)
+  // a reply's original line, its nick or text (not the empty rest of the
+  // line): jump to the original, where it's loaded (not in All Highlights,
+  // whose rows come from many panels)
   app.elem.panel.addEventListener('click', (e) => {
-    const line = e.target.closest('.reply-original');
+    const line = e.target.closest('.reply-original-nick, .reply-original-text')
+      ?.closest('.reply-original');
     if (!line || line.closest('li.search'))
       return;
     const li = line.closest('li[data-reply-to]');
