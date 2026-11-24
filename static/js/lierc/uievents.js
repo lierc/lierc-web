@@ -14,6 +14,14 @@ export const UIEvents = function(app) {
     });
   }
 
+  // Shows the image `step` places on (wrapping) in an image popup.
+  const step_image_popup = (dialog, step) => {
+    const n = dialog.images.length;
+    dialog.image = (dialog.image + step + n) % n;
+    const img = dialog.el.querySelector('img.image-popup');
+    img.src = `https://noembed.com/i/${dialog.images[dialog.image]}`;
+  };
+
   document.addEventListener("keydown", (e) => {
     const mods = {
       meta: e.altKey,
@@ -24,6 +32,14 @@ export const UIEvents = function(app) {
 
     if (e.which == 27 && app.overlayed()) {
       app.close_dialog();
+      return;
+    }
+    // the image popup: ←/→ step through the message's images
+    else if (app.overlayed() && (e.key == "ArrowLeft" || e.key == "ArrowRight")
+             && !mods.meta && !mods.ctrl && !mods.cmd && !mods.shift
+             && app.dialog.images?.length > 1) {
+      e.preventDefault();
+      step_image_popup(app.dialog, e.key == "ArrowRight" ? 1 : -1);
       return;
     }
     else if (app.overlayed()) {
@@ -694,6 +710,11 @@ export const UIEvents = function(app) {
     const dialog = app.new_dialog("image_popup", {
       href: href
     });
+    // the message's images, in order, for ←/→ (step_image_popup)
+    const message = img.closest('.message-text') || img.closest('li');
+    dialog.images = [...message.querySelectorAll('.image-wrap a > img')]
+      .map((i) => i.parentNode.href);
+    dialog.image = Math.max(0, dialog.images.indexOf(href));
 
     clickTouchEvent(dialog.el, (e) => {
       e.preventDefault();
