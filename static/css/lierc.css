@@ -1610,9 +1610,15 @@ p.embed-source {
 /* ===== Reactions and message controls ===== */
 
 /* the reaction button shown over a message on hover */
+/* a reply showing what it answers: the controls drop below that 16px line,
+   onto the reply's own row */
+li.reply:has(> .reply-original:not([hidden])) {
+  --controls-shift: 16px;
+}
+
 .message-controls {
   position: absolute;
-  top: 2px;
+  top: calc(2px + var(--controls-shift, 0px));
   right: 42px;
   padding: 2px;
   font-size: 15px;
@@ -1629,7 +1635,7 @@ p.embed-source {
   color: var(--button-icon);
 
   li.message.monospace.consecutive & {
-    top: -2px;
+    top: calc(-2px + var(--controls-shift, 0px));
   }
 
   li.message:hover &,
